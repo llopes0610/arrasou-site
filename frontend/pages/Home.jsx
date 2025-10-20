@@ -1,6 +1,40 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
+import Loading from '../components/Loading';
+import { getServices } from '../utils/api';
 
 export default function Home() {
+  const [servicos, setServicos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchServicos = async () => {
+      try {
+        const response = await getServices();
+        // Pegar apenas os 3 primeiros para exibir na home
+        setServicos(response.data.slice(0, 3));
+      } catch (err) {
+        console.error('Erro ao carregar serviços:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchServicos();
+  }, []);
+
+  const getEmoji = (category) => {
+    const emojis = {
+      sobrancelhas: '👀',
+      cilios: '✨',
+      labios: '💋',
+      facial: '🌟'
+    };
+    return emojis[category] || '💅';
+  };
+
   return (
     <div>
       {/* Hero Section */}
@@ -12,7 +46,11 @@ export default function Home() {
           <p className="text-xl mb-8 opacity-90">
             Design de sobrancelhas, cílios e muito mais. Realce sua beleza natural.
           </p>
-          <Button variant="secondary" className="text-lg">
+          <Button 
+            variant="secondary" 
+            className="text-lg"
+            onClick={() => navigate('/agendamento')}
+          >
             Agendar Agora
           </Button>
         </div>
@@ -23,42 +61,42 @@ export default function Home() {
         <div className="container mx-auto">
           <h2 className="text-4xl font-bold text-center mb-12">Nossos Serviços</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Card 1 */}
-            <div className="bg-white p-6 rounded-lg shadow-lg text-center hover:shadow-xl transition">
-              <div className="text-5xl mb-4">👀</div>
-              <h3 className="text-2xl font-bold mb-3">Design de Sobrancelhas</h3>
-              <p className="text-gray-600 mb-4">
-                Modelagem personalizada que realça seu rosto
-              </p>
-              <Button variant="outline" className="w-full">
-                Saiba Mais
-              </Button>
+          {loading ? (
+            <Loading message="Carregando serviços..." />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {servicos.map(servico => (
+                <div 
+                  key={servico.id}
+                  className="bg-white p-6 rounded-lg shadow-lg text-center hover:shadow-xl transition"
+                >
+                  <div className="text-5xl mb-4">{getEmoji(servico.category)}</div>
+                  <h3 className="text-2xl font-bold mb-3">{servico.name}</h3>
+                  <p className="text-gray-600 mb-4">
+                    {servico.description.substring(0, 80)}...
+                  </p>
+                  <p className="text-orange-600 font-bold text-xl mb-4">
+                    R$ {servico.price.toFixed(2)}
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => navigate('/servicos')}
+                  >
+                    Saiba Mais
+                  </Button>
+                </div>
+              ))}
             </div>
+          )}
 
-            {/* Card 2 */}
-            <div className="bg-white p-6 rounded-lg shadow-lg text-center hover:shadow-xl transition">
-              <div className="text-5xl mb-4">✨</div>
-              <h3 className="text-2xl font-bold mb-3">Cílios</h3>
-              <p className="text-gray-600 mb-4">
-                Aumento de cílios para um olhar irresistível
-              </p>
-              <Button variant="outline" className="w-full">
-                Saiba Mais
-              </Button>
-            </div>
-
-            {/* Card 3 */}
-            <div className="bg-white p-6 rounded-lg shadow-lg text-center hover:shadow-xl transition">
-              <div className="text-5xl mb-4">💋</div>
-              <h3 className="text-2xl font-bold mb-3">Preenchimento Labial</h3>
-              <p className="text-gray-600 mb-4">
-                Lábios volumosos e naturais
-              </p>
-              <Button variant="outline" className="w-full">
-                Saiba Mais
-              </Button>
-            </div>
+          <div className="text-center mt-12">
+            <Button 
+              variant="primary"
+              onClick={() => navigate('/servicos')}
+            >
+              Ver Todos os Serviços
+            </Button>
           </div>
         </div>
       </section>
@@ -72,7 +110,11 @@ export default function Home() {
           <p className="text-lg mb-6 opacity-90">
             Agende sua consulta agora mesmo
           </p>
-          <Button variant="secondary" className="text-lg">
+          <Button 
+            variant="secondary" 
+            className="text-lg"
+            onClick={() => navigate('/agendamento')}
+          >
             Agendar Agora
           </Button>
         </div>

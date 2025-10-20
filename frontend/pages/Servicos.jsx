@@ -1,30 +1,39 @@
+import { useState, useEffect } from 'react';
 import Card from '../components/Card';
 import Button from '../components/Button';
+import Loading from '../components/Loading';
+import ErrorMessage from '../components/ErrorMessage';
+import { getServices } from '../utils/api';
+import { useNavigate } from 'react-router-dom';
 
 export default function Servicos() {
-  const servicos = [
-    {
-      id: 1,
-      title: 'Design de Sobrancelhas',
-      description: 'Modelagem e design personalizado',
-      price: 'R$ 50,00',
-      duration: '30 min',
-    },
-    {
-      id: 2,
-      title: 'Aumento de Cílios',
-      description: 'Cílios volumosos e naturais',
-      price: 'R$ 80,00',
-      duration: '1h',
-    },
-    {
-      id: 3,
-      title: 'Preenchimento Labial',
-      description: 'Lábios volumosos com ácido hialurônico',
-      price: 'R$ 120,00',
-      duration: '45 min',
-    },
-  ];
+  const [servicos, setServicos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+  const fetchServicos = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await getServices();
+      setServicos(response.data);
+    } catch (err) {
+      setError(err.message || 'Erro ao carregar serviços');
+      console.error('Erro:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchServicos();
+  }, []);
+
+  const handleAgendar = (servico) => {
+    // Navegar para agendamento com dados do serviço
+    navigate('/agendamento', { state: { servico } });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -38,28 +47,55 @@ export default function Servicos() {
         </div>
       </div>
 
-      {/* Serviços Grid */}
+      {/* Conteúdo */}
       <section className="py-16 px-4">
         <div className="container mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {servicos.map(servico => (
-              <Card
-                key={servico.id}
-                title={servico.title}
-                description={servico.description}
-              >
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm text-gray-600">
-                    <span>⏱️ Duração: {servico.duration}</span>
-                    <span className="font-bold text-orange-600">{servico.price}</span>
+          {/* Loading */}
+          {loading && <Loading message="Carregando serviços..." />}
+
+          {/* Error */}
+          {error && !loading && (
+            <ErrorMessage message={error} onRetry={fetchServicos} />
+          )}
+
+          {/* Serviços Grid */}
+          {!loading && !error && servicos.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {servicos.map(servico => (
+                <Card
+                  key={servico.id}
+                  image={servico.image}
+                  title={servico.name}
+                  description={servico.description}
+                >
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>⏱️ {servico.duration} min</span>
+                      <span className="font-bold text-orange-600">
+                        R$ {servico.price.toFixed(2)}
+                      </span>
+                    </div>
+                    <Button 
+                      variant="primary" 
+                      className="w-full"
+                      onClick={() => handleAgendar(servico)}
+                    >
+                      Agendar Agora
+                    </Button>
                   </div>
-                  <Button variant="primary" className="w-full">
-                    Agendar Agora
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!loading && !error && servicos.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-gray-600 text-lg">
+                Nenhum serviço disponível no momento.
+              </p>
+            </div>
+          )}
         </div>
       </section>
     </div>
