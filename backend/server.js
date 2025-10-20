@@ -14,7 +14,16 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+// CORS - Permitir requisições do frontend
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://arrasousobrancelhas.com.br',
+    'https://www.arrasousobrancelhas.com.br',
+    'https://seu-site.vercel.app' // URL que o Vercel vai gerar
+  ],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
